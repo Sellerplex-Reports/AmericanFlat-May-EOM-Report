@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Americanflat — May 2026 DSP EOM Report</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg:#0b0f18;--surface:#131928;--surface2:#1a2236;--border:#252f45;
+    --accent:#3b7ff5;--accent2:#6c3df5;--green:#22c55e;--amber:#f59e0b;
+    --red:#ef4444;--cyan:#22d3ee;--text:#e8edf7;--muted:#7a8aaa;
+    --purple:#a78bfa;--promoted:#f59e0b;--halo:#a78bfa;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--text);font-family:'Inter','Segoe UI',system-ui,sans-serif;min-height:100vh;font-size:14px}
+  .topnav{position:sticky;top:0;z-index:100;background:rgba(11,15,24,.96);border-bottom:1px solid var(--border);backdrop-filter:blur(8px);display:flex;align-items:center;gap:12px;padding:0 28px;height:56px}
+  .topnav .logo{font-weight:800;font-size:15px;letter-spacing:.04em;color:var(--accent);margin-right:8px;display:flex;align-items:center;gap:8px}
+  .topnav .logo span{color:var(--text);font-weight:500}
+  .topnav .report-title{font-size:13px;color:var(--muted)}
+  .topnav .spacer{flex:1}
+  .topnav .timestamp{font-size:11px;color:var(--muted);background:var(--surface2);border-radius:6px;padding:4px 10px;border:1px solid var(--border)}
+  .launch-badge{font-size:10px;font-weight:700;letter-spacing:.05em;background:linear-gradient(135deg,#22c55e22,#22c55e44);color:var(--green);border:1px solid var(--green);border-radius:20px;padding:3px 10px;text-transform:uppercase}
+  .tab-bar{background:var(--surface);border-bottom:1px solid var(--border);display:flex;gap:0;padding:0 28px;overflow-x:auto}
+  .tab-btn{padding:14px 18px;font-size:13px;font-weight:500;color:var(--muted);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap}
+  .tab-btn:hover{color:var(--text)}
+  .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+  .tab-content{display:none}
+  .tab-content.active{display:block}
+  .page{padding:28px;max-width:1440px;margin:0 auto}
+  .section{margin-bottom:32px}
+  .section-title{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+  .section-title::after{content:'';flex:1;height:1px;background:var(--border)}
+  .hero-header{background:linear-gradient(135deg,var(--surface) 0%,#1a2540 100%);border:1px solid var(--border);border-radius:14px;padding:24px 28px;margin-bottom:24px;display:flex;align-items:center;gap:24px}
+  .hero-header h1{font-size:24px;font-weight:800}
+  .hero-header .sub{font-size:13px;color:var(--muted);margin-top:4px}
+  .hero-header .dsp-pill{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--cyan);background:#22d3ee15;border:1px solid #22d3ee44;border-radius:20px;padding:4px 12px;margin-top:8px;display:inline-block}
+  .hero-header .accent-line{width:4px;height:56px;background:linear-gradient(to bottom,var(--accent),var(--accent2));border-radius:4px;flex-shrink:0}
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px}
+  .kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;transition:border-color .2s}
+  .kpi-card:hover{border-color:var(--accent)}
+  .kpi-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:8px}
+  .kpi-value{font-size:24px;font-weight:800;line-height:1;color:var(--text)}
+  .kpi-value.accent{color:var(--accent)}
+  .kpi-value.green{color:var(--green)}
+  .kpi-value.amber{color:var(--amber)}
+  .kpi-sub{font-size:11px;color:var(--muted);margin-top:4px}
+  .chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .chart-grid.three{grid-template-columns:1fr 1fr 1fr}
+  .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px}
+  .chart-card.full{grid-column:1/-1}
+  .chart-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:16px}
+  .chart-container{position:relative}
+  .chart-container.tall{height:300px}
+  .chart-container.short{height:220px}
+  .chart-container.xtall{height:380px}
+  .data-table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:auto}
+  .data-table{width:100%;border-collapse:collapse;border-spacing:0;font-size:12px;table-layout:auto}
+  .data-table thead{position:sticky;top:0;z-index:2}
+  .data-table thead tr{background:var(--surface2)}
+  .data-table th{
+    padding:10px 16px;
+    text-align:left;
+    font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);
+    border-bottom:2px solid var(--border);
+    border-right:1px solid var(--border);
+    white-space:nowrap;
+    vertical-align:middle;
+  }
+  .data-table th:last-child{border-right:none}
+  .data-table td{
+    padding:10px 16px;
+    border-bottom:1px solid var(--border);
+    border-right:1px solid var(--border);
+    color:var(--text);
+    vertical-align:middle;
+    white-space:nowrap;
+  }
+  .data-table td:last-child{border-right:none}
+  .data-table tbody tr:last-child td{border-bottom:none}
+  .data-table tbody tr:hover td{background:var(--surface2)}
+  .data-table th.num{text-align:right}
+  .num{text-align:right;font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+  .good{color:var(--green)}
+  .accent-c{color:var(--accent)}
+  .amb{color:var(--amber)}
+  .tag{display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px}
+  .tag-promoted{background:#f59e0b22;color:var(--promoted);border:1px solid #f59e0b44}
+  .tag-halo{background:#a78bfa22;color:var(--halo);border:1px solid #a78bfa44}
+  .insight-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}
+  .insight-card{background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:8px;padding:16px}
+  .insight-card.g{border-left-color:var(--green)}
+  .insight-card.a{border-left-color:var(--amber)}
+  .insight-card .il{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:6px}
+  .insight-card .iv{font-size:22px;font-weight:800;color:var(--text)}
+  .insight-card .id{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.5}
+  .callout{margin-top:12px;padding:14px 16px;background:var(--surface2);border-radius:8px;font-size:12px;color:var(--muted);line-height:1.6}
+  .seg-badge{display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;border-radius:12px;white-space:nowrap}
+  .seg-Champions{background:#f59e0b33;color:#fbbf24;border:1px solid #f59e0b55}
+  .seg-Loyal{background:#22c55e33;color:#4ade80;border:1px solid #22c55e55}
+  .seg-Big{background:#a78bfa33;color:#c4b5fd;border:1px solid #a78bfa55}
+  .seg-Potential{background:#22d3ee33;color:#67e8f9;border:1px solid #22d3ee55}
+  .seg-Recent{background:#3b7ff533;color:#93bbfd;border:1px solid #3b7ff555}
+  .seg-Risk{background:#ef444433;color:#fca5a5;border:1px solid #ef444455}
+  .seg-Needs{background:#7a8aaa22;color:#9ca3af;border:1px solid #7a8aaa44}
+  ::-webkit-scrollbar{width:6px;height:6px}
+  ::-webkit-scrollbar-track{background:var(--bg)}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+  @media(max-width:900px){.chart-grid,.chart-grid.three,.insight-grid{grid-template-columns:1fr}.chart-card.full{grid-column:1}}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="logo">SP <span>SellerPlex</span></div>
+  <div class="report-title">Americanflat — May 2026 DSP EOM Report</div>
+  <div class="spacer"></div>
+  <div class="launch-badge">🚀 DSP Launch Month</div>
+  <div class="timestamp">Campaign Period: May 15–31, 2026</div>
+</nav>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('overview',this)">📊 DSP Overview</button>
+  <button class="tab-btn" onclick="switchTab('asin',this)">🏷️ ASIN Performance</button>
+  <button class="tab-btn" onclick="switchTab('attribution',this)">🔗 Attribution</button>
+  <button class="tab-btn" onclick="switchTab('funnel',this)">🔭 Audience & Exposure</button>
+  <button class="tab-btn" onclick="switchTab('paths',this)">🛣️ Path to Conversion</button>
+  <button class="tab-btn" onclick="switchTab('fiveyear',this)">📈 5-Year Sales Data</button>
+  <button class="tab-btn" onclick="switchTab('rfm',this)">🎯 RFM Analysis</button>
+</div>
+
+<!-- ═══ TAB 1: DSP OVERVIEW ═══ -->
+<div id="tab-overview" class="tab-content active"><div class="page">
+  <div class="hero-header">
+    <div class="accent-line"></div>
+    <div>
+      <h1>Americanflat</h1>
+      <div class="sub">May 2026 · Amazon DSP End-of-Month Performance Report</div>
+      <div class="dsp-pill">📅 DSP Campaign Launched May 15 · 17 Days Active</div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-title">Key Performance Indicators</div>
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-label">Ad Spend</div><div class="kpi-value accent">$6,166</div><div class="kpi-sub">May 15–31 · 17 days</div></div>
+      <div class="kpi-card"><div class="kpi-label">Ad Revenue</div><div class="kpi-value green">$28,870</div><div class="kpi-sub">Total product sales</div></div>
+      <div class="kpi-card"><div class="kpi-label">Total ROAS</div><div class="kpi-value accent">4.68×</div><div class="kpi-sub">Revenue per $1 spent</div></div>
+      <div class="kpi-card"><div class="kpi-label">Impressions</div><div class="kpi-value">715K</div><div class="kpi-sub">Total served</div></div>
+      <div class="kpi-card"><div class="kpi-label">Viewable Imp.</div><div class="kpi-value">509K</div><div class="kpi-sub">71.2% viewability</div></div>
+      <div class="kpi-card"><div class="kpi-label">eCPM</div><div class="kpi-value">$12.11</div><div class="kpi-sub">Per 1K viewable imp.</div></div>
+      <div class="kpi-card"><div class="kpi-label">Total DPVR%</div><div class="kpi-value amber">1.12%</div><div class="kpi-sub">Detail page view rate</div></div>
+      <div class="kpi-card"><div class="kpi-label">Total Purchases</div><div class="kpi-value green">1,104</div><div class="kpi-sub">Attributed conversions</div></div>
+      <div class="kpi-card"><div class="kpi-label">Purchase Views</div><div class="kpi-value">1,068</div><div class="kpi-sub">View-through</div></div>
+      <div class="kpi-card"><div class="kpi-label">Purchase Clicks</div><div class="kpi-value">36</div><div class="kpi-sub">Click-through</div></div>
+      <div class="kpi-card"><div class="kpi-label">NTB Purchases</div><div class="kpi-value green">929</div><div class="kpi-sub">New-to-brand customers</div></div>
+      <div class="kpi-card"><div class="kpi-label">% NTB</div><div class="kpi-value green">84.1%</div><div class="kpi-sub">Of total purchases</div></div>
+      <div class="kpi-card"><div class="kpi-label">Total ATC</div><div class="kpi-value">697</div><div class="kpi-sub">Add-to-cart events</div></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-title">Daily Performance Trends</div>
+    <div class="chart-grid">
+      <div class="chart-card full"><div class="chart-title">Daily Ad Spend · Ad Revenue · ROAS</div><div class="chart-container tall"><canvas id="c1"></canvas></div></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-title">Purchase Activity</div>
+    <div class="chart-grid">
+      <div class="chart-card"><div class="chart-title">Daily Purchases, Views & NTB</div><div class="chart-container tall"><canvas id="c2"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">NTB vs. Existing Customer Split</div><div class="chart-container tall"><canvas id="c3"></canvas></div></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-title">Performance by Campaign Order</div>
+    <div class="data-table-wrap"><table class="data-table">
+      <thead><tr><th>Order</th><th class="num">Cost</th><th class="num">Sales</th><th class="num">ROAS</th><th class="num">Purchases</th><th class="num">Purch. Views</th><th class="num">Purch. Clicks</th><th class="num">NTB</th><th class="num">% NTB</th><th class="num">ATC</th></tr></thead>
+      <tbody id="orderTbody"></tbody>
+    </table></div>
+  </div>
+</div></div>
+
+<!-- ═══ TAB 2: ASIN PERFORMANCE ═══ -->
+<div id="tab-asin" class="tab-content"><div class="page">
+  <div class="insight-grid">
+    <div class="insight-card"><div class="il">Top Promoted ASIN</div><div class="iv">B07DL9LR5S</div><div class="id">Throw Blanket — $3,886 sales · 144 purchases · 91.7% NTB</div></div>
+    <div class="insight-card g"><div class="il">Top Halo ASIN</div><div class="iv">B096L3VDGS</div><div class="id">Kids Artwork 2-Pack — $1,473 halo sales · 92% NTB</div></div>
+    <div class="insight-card a"><div class="il">Overall NTB Rate</div><div class="iv">84.1%</div><div class="id">New customer acquisition across all DSP-attributed purchases</div></div>
+  </div>
+  <div class="section">
+    <div class="section-title">Revenue Trend by Conversion Type</div>
+    <div class="chart-grid">
+      <div class="chart-card full"><div class="chart-title">Daily Revenue — Promoted vs. Brand Halo</div><div class="chart-container tall"><canvas id="c4"></canvas></div></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-title">Conversion Type Breakdown</div>
+    <div class="chart-grid">
+      <div class="chart-card"><div class="chart-title">Sales Split: Promoted vs. Brand Halo</div><div class="chart-container short"><canvas id="c5"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Purchases Split: Promoted vs. Brand Halo</div><div class="chart-container short"><canvas id="c6"></canvas></div></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-title">Promoted ASINs — Performance Metrics</div>
+    <div class="data-table-wrap"><table class="data-table">
+      <thead><tr><th>ASIN</th><th>Product</th><th class="num">Sales</th><th class="num">Purchases</th><th class="num">Purch. Views</th><th class="num">Purch. Clicks</th><th class="num">ATC</th><th class="num">NTB</th><th class="num">% NTB</th></tr></thead>
+      <tbody id="promoTbody"></tbody>
+    </table></div>
+  </div>
+  <div class="section">
+    <div class="section-title">Brand Halo ASINs — Performance Metrics</div>
+    <div class="data-table-wrap"><table class="data-table">
+      <thead><tr><th>ASIN</th><th>Product</th><th class="num">Sales</th><th class="num">Purchases</th><th class="num">Purch. Views</th><th class="num">Purch. Clicks</th><th class="num">ATC</th><th class="num">NTB</th><th class="num">% NTB</th></tr></thead>
+      <tbody id="haloTbody"></tbody>
+    </table></div>
+  </div>
+  <div class="section">
+    <div class="section-title">Top 10 ASINs by Total Sales</div>
+    <div class="data-table-wrap"><table class="data-table">
+      <thead><tr><th>Rank</th><th>ASIN</th><th>Type</th><th>Product</th><th class="num">Sales</th><th class="num">Purchases</th><th class="num">NTB</th><th class="num">% NTB</th></tr></thead>
+      <tbody id="top10Tbody"></tbody>
+    </table></div>
+  </div>
+</div></div>
+
+<!-- ═══ TAB 3: ATTRIBUTION ═══ -->
+<div id="tab-attribution" class="tab-content"><div class="page">
+  <div class="insight-grid">
+    <div class="insight-card"><div class="il">SA→DSP ROAS</div><div class="iv accent-c">11.54×</div><div class="id">Highest ROAS when DSP retargets SA audiences — powerful sequential strategy</div></div>
+    <div class="insight-card g"><div class="il">DSP-Only NTB Rate</div><div class="iv green">94.3%</div><div class="id">DSP reaches cold audiences SA can't — highest new-to-brand rate of any sequence</div></div>
+    <div class="insight-card a"><div class="il">SA→DSP Sales</div><div class="iv">$55,587</div><div class="id">Largest revenue pool in cross-channel journeys across 48,184 users</div></div>
+  </div>
+  <div class="section">
+    <div class="section-title">DSP Incremental Lift Analysis (AMC)</div>
+    <div class="data-table-wrap"><table class="data-table">
+      <thead><tr><th>Metric</th><th class="num">SA Only</th><th class="num">With DSP</th><th class="num">DSP Lift</th></tr></thead>
+      <tbody>
+        <tr><td>Total Cost</td><td class="num">$295,241</td><td class="num">$29,457</td><td class="num" style="color:var(--muted)">−90.0% <span style="font-size:10px">(DSP cohort only)</span></td></tr>
+        <tr><td>Total Product Sales</td><td class="num">$2,072,922</td><td class="num">$123,587</td><td class="num" style="color:var(--muted)">−94.0%</td></tr>
+        <tr><td>Total ROAS</td><td class="num">7.02×</td><td class="num">4.20×</td><td class="num" style="color:var(--muted)">−40.2%</td></tr>
+        <tr><td>Total Purchases</td><td class="num">82,893</td><td class="num">4,819</td><td class="num" style="color:var(--muted)">−94.2%</td></tr>
+        <tr><td>NTB Purchases</td><td class="num">44,826</td><td class="num">1,970</td><td class="num" style="color:var(--muted)">−95.6%</td></tr>
+        <tr><td>NTB Sales</td><td class="num">$1,101,269</td><td class="num">$49,181</td><td class="num" style="color:var(--muted)">−95.5%</td></tr>
+      </tbody>
+    </table></div>
+    <div class="callout" style="border-left:3px solid var(--amber)"><strong style="color:var(--text)">ℹ️ Context:</strong> "With DSP" reflects only the incremental DSP-attributed cohort over 17 active days vs. a full month of mature SA activity. Lower ROAS at launch is expected — DSP's primary value is <strong style="color:var(--cyan)">new customer acquisition at 84%+ NTB</strong>, a segment largely unreachable via Sponsored Ads alone.</div>
+  </div>
+  <div class="section">
+    <div class="section-title">ROAS & NTB Rate by Exposure Sequence</div>
+    <div class="chart-grid">
+      <div class="chart-card"><div class="chart-title">ROAS by Path Type</div><div class="chart-container tall"><canvas id="c7"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">NTB Rate % by Exposure Sequence</div><div class="chart-container tall"><canvas id="c8"></canvas></div></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-title">Exposure Sequence Performance Details</div>
+    <div class="data-table-wrap"><table class="data-table">
+      <thead><tr><th>Exposure Sequence</th><th class="num">Total Sales</th><th class="num">ROAS</th><th class="num">Purchases</th><th class="num">NTB Purchases</th><th class="num">NTB Rate %</th><th class="num">Users</th></tr></thead>
+      <tbody>
+        <tr><td><span style="color:var(--amber);font-weight:700">DSP → SA</span></td><td class="num good">$2,683</td><td class="num accent-c">9.65×</td><td class="num">114</td><td class="num">94</td><td class="num">82.5%</td><td class="num">2,399</td></tr>
+        <tr><td><span style="color:var(--cyan);font-weight:700">SA → DSP</span></td><td class="num good">$55,587</td><td class="num accent-c">11.54×</td><td class="num">2,258</td><td class="num">1,777</td><td class="num">78.7%</td><td class="num">48,184</td></tr>
+        <tr><td><span style="color:var(--muted);font-weight:600">SA Only</span></td><td class="num">$1,405,414</td><td class="num">N/A</td><td class="num">56,995</td><td class="num">44,826</td><td class="num">78.6%</td><td class="num">8,600,058</td></tr>
+        <tr><td><span style="color:var(--green);font-weight:700">DSP Only</span></td><td class="num">$2,211</td><td class="num">1.89×</td><td class="num">105</td><td class="num">99</td><td class="num good">94.3%</td><td class="num">15,088</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</div></div>
+
+<!-- ═══ TAB 4: AUDIENCE & EXPOSURE ═══ -->
+<div id="tab-funnel" class="tab-content"><div class="page">
+  <div class="section">
+    <div class="section-title">Ad-Exposed vs. Non-Ad-Exposed Conversion Analysis</div>
+    <div class="chart-grid">
+      <div class="chart-card"><div class="chart-title">Total Product Sales by Exposure Type</div><div class="chart-container short"><canvas id="c9"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">User Reach by Exposure Type</div><div class="chart-container short"><canvas id="c10"></canvas></div></div>
+    </div>
+    <div class="data-table-wrap" style="margin-top:20px"><table class="data-table">
+      <thead><tr><th>Exposure Type</th><th class="num">Detail Page Views</th><th class="num">Add to Cart</th><th class="num">Purchases</th><th class="num">Total Sales ($)</th><th class="num">User Count</th><th class="num">Conv. Events</th></tr></thead>
+      <tbody>
+        <tr><td><span style="color:var(--accent);font-weight:700">Ad-Exposed</span></td><td class="num accent-c">1,393,984</td><td class="num">296,870</td><td class="num good">173,063</td><td class="num good">$4,450,209</td><td class="num">560,637</td><td class="num">1,903,484</td></tr>
+        <tr><td><span style="color:var(--muted);font-weight:600">Non-Ad-Exposed</span></td><td class="num">556,994</td><td class="num">148,686</td><td class="num">24,545</td><td class="num">$627,242</td><td class="num">546,119</td><td class="num">954,109</td></tr>
+      </tbody>
+    </table></div>
+    <div class="callout" style="border-left:3px solid var(--green)"><strong style="color:var(--text)">📊 Key Insight:</strong> Ad-exposed users generated <strong style="color:var(--green)">$4.45M</strong> vs. $627K for non-ad-exposed — a <strong style="color:var(--green)">7.1× revenue multiplier</strong>. DSP-reached audiences convert at dramatically higher rates.</div>
+  </div>
+  <div class="section">
+    <div class="section-title">Exposure Frequency Analysis</div>
+    <div class="chart-grid">
+      <div class="chart-card"><div class="chart-title">Product Sales by Exposure Frequency</div><div class="chart-container short"><canvas id="c11"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">User Count by Exposure Frequency</div><div class="chart-container short"><canvas id="c12"></canvas></div></div>
+    </div>
+    <div class="callout" style="border-left:3px solid var(--cyan)"><strong style="color:var(--text)">🔁 Frequency Effect:</strong> Multi-exposed users (3+ ads) account for <strong style="color:var(--cyan)">82.3%</strong> of total product sales — repeated DSP exposure meaningfully increases purchase intent.</div>
+  </div>
+  <div class="section">
+    <div class="section-title">Purchase Lead Time: Ad-Exposed vs. Non-Ad-Exposed</div>
+    <div class="chart-card full"><div class="chart-title">Days from First Ad Exposure to Purchase</div><div class="chart-container tall"><canvas id="c13"></canvas></div></div>
+  </div>
+</div></div>
+
+<!-- ═══ TAB 5: PATH TO CONVERSION ═══ -->
+<div id="tab-paths" class="tab-content"><div class="page">
+  <div class="insight-grid">
+    <div class="insight-card"><div class="il">Highest Conv. Rate</div><div class="iv accent-c">6.03%</div><div class="id">SD→SP×5 path — Display as first touch lifts SP conversion dramatically</div></div>
+    <div class="insight-card g"><div class="il">DSP-Assisted Paths</div><div class="iv green">SP → DSP</div><div class="id">Most common cross-channel DSP touchpoint — 257 users, 3.1% conversion rate</div></div>
+    <div class="insight-card a"><div class="il">Top Revenue Path</div><div class="iv">SP × 5</div><div class="id">$3.46M from 2.5M users — repeat SP exposure drives the core engine</div></div>
+  </div>
+  <div class="section">
+    <div class="section-title">Top 10 Paths to Conversion — by Revenue</div>
+    <div class="data-table-wrap"><table class="data-table">
+      <thead><tr><th>Rank</th><th>Path</th><th class="num">Total Users</th><th class="num">Converting</th><th class="num">Conv. Rate</th><th class="num">Revenue</th><th class="num">Rev/Converter</th></tr></thead>
+      <tbody id="ptcTbody"></tbody>
+    </table></div>
+  </div>
+  <div class="section">
+    <div class="section-title">Top 8 Paths by Revenue</div>
+    <div class="chart-card full"><div class="chart-title">Revenue by Path (DSP-touched paths highlighted in cyan)</div><div class="chart-container tall"><canvas id="c14"></canvas></div></div>
+  </div>
+  <div class="section">
+    <div class="section-title">Strategic Summary</div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;line-height:1.8;font-size:13px;color:var(--muted)">
+      <p style="color:var(--text);font-weight:600;margin-bottom:12px;font-size:14px">How DSP Contributed to Business Outcomes in May 2026</p>
+      <p><span style="color:var(--accent)">■</span> <strong style="color:var(--text)">New Customer Acquisition:</strong> DSP delivered <strong style="color:var(--green)">84.1% NTB purchase rate</strong> — vs. ~78.6% for Sponsored Ads only — reaching net-new audiences outside the search funnel.</p><br>
+      <p><span style="color:var(--cyan)">■</span> <strong style="color:var(--text)">Cross-Channel Lift:</strong> SA→DSP and DSP→SA journeys achieved <strong style="color:var(--cyan)">9.65–11.54× ROAS</strong>, significantly outperforming single-channel paths.</p><br>
+      <p><span style="color:var(--amber)">■</span> <strong style="color:var(--text)">Audience Amplification:</strong> Ad-exposed users generated <strong style="color:var(--amber)">7.1× more revenue</strong>. Multi-frequency exposure drove 82.3% of total DSP-attributed sales.</p><br>
+      <p><span style="color:var(--green)">■</span> <strong style="color:var(--text)">Ramp Context:</strong> With only 17 active days, all metrics reflect an early learning phase. As audiences mature and retargeting pools deepen, ROAS is expected to improve through Q3.</p>
+    </div>
+  </div>
+</div></div>
+
+<!-- ═══ TAB 6: 5-YEAR SALES DATA ═══ -->
+<div id="tab-fiveyear" class="tab-content"><div class="page">
+  <div class="insight-grid">
+    <div class="insight-card"><div class="il">Peak Revenue Year</div><div class="iv accent-c">2024</div><div class="id">$64.5M revenue · 3.13M units · 2,124 active ASINs</div></div>
+    <div class="insight-card g"><div class="il">5-Year Revenue</div><div class="iv green">$252.6M</div><div class="id">Total gross sales across 2021–2026 (2026 = partial year through June)</div></div>
+    <div class="insight-card a"><div class="il">Est. 5-Yr Customer LTV</div><div class="iv amber">$172.40</div><div class="id">AOV $20.95 × 1.65 avg orders/yr × 5 yrs · 1-yr LTV avg: $34.28</div></div>
+  </div>
+  <div class="section">
+    <div class="section-title">Annual Revenue & Units Trend</div>
+    <div class="chart-grid">
+      <div class="chart-card full"><div class="chart-title">Annual Revenue (2021–2026)</div><div class="chart-container tall"><canvas id="c15"></canvas></div></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-title">Monthly Revenue Trend (2024–2026)</div>
+    <div class="chart-grid">
+      <div class="chart-card full"><div class="chart-title">Monthly Revenue by Year</div><div class="chart-container xtall"><canvas id="c16"></canvas></div></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-title">Monthly LTV Trend (2024–2025)</div>
+    <div class="chart-grid">
+      <div class="chart-card full"><div class="chart-title">Monthly 1-Year LTV Estimate — 2024 vs 2025</div><div class="chart-container tall"><canvas id="c16ltv"></canvas></div></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-title">Annual Performance Metrics</div>
+    <div class="data-table-wrap"><table class="data-table">
+      <thead><tr><th>Year</th><th class="num">Revenue</th><th class="num">Units Sold</th><th class="num">Est. Customers</th><th class="num">AOV</th><th class="num">1-Yr LTV</th><th class="num">Cumulative LTV</th><th class="num">Active ASINs</th><th class="num">YoY Revenue Δ</th><th class="num">YoY Units Δ</th></tr></thead>
+      <tbody id="annualTbody"></tbody>
+    </table></div>
+  </div>
+  <div class="section">
+    <div class="section-title">Customer Lifetime Value Trends</div>
+    <div class="chart-grid">
+      <div class="chart-card"><div class="chart-title">1-Year LTV by Year (AOV × Purchase Frequency)</div><div class="chart-container short"><canvas id="c19ltv"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Estimated Unique Customers Acquired per Year</div><div class="chart-container short"><canvas id="c20cust"></canvas></div></div>
+    </div>
+    <div class="callout" style="border-left:3px solid var(--cyan);margin-top:16px">
+      <strong style="color:var(--text)">📐 LTV Methodology:</strong> 1-Year LTV = AOV × avg purchase frequency (1.646 orders/yr, sourced from RFM dataset). Cumulative LTV stacks annual LTV across active years. Est. Customers = units ÷ avg frequency. 2026 is a partial year (Jan–Jun).
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-title">AOV & ASIN Growth</div>
+    <div class="chart-grid">
+      <div class="chart-card"><div class="chart-title">AOV Trend by Year</div><div class="chart-container short"><canvas id="c17"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Active ASIN Count by Year</div><div class="chart-container short"><canvas id="c18"></canvas></div></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-title">Top 20 All-Time ASINs by Revenue</div>
+    <div class="data-table-wrap"><table class="data-table">
+      <thead><tr><th>Rank</th><th>ASIN</th><th class="num">Total Revenue</th><th class="num">Units Sold</th><th class="num">AOV</th><th class="num">Active Years</th><th class="num">Annual LTV</th></tr></thead>
+      <tbody id="top20Tbody"></tbody>
+    </table></div>
+  </div>
+</div></div>
+
+<!-- ═══ TAB 7: RFM ANALYSIS ═══ -->
+<div id="tab-rfm" class="tab-content"><div class="page">
+  <div class="hero-header">
+    <div class="accent-line"></div>
+    <div>
+      <h1>RFM Analysis</h1>
+      <div class="sub">Gateway ASIN-Level Customer Segmentation · 2,755 ASINs · 2.56M Users</div>
+      <div class="dsp-pill">Recency · Frequency · Monetary Score Analysis</div>
+    </div>
+  </div>
+  <div class="insight-grid">
+    <div class="insight-card"><div class="il">Total ASINs Analyzed</div><div class="iv accent-c">2,755</div><div class="id">Unique gateway ASINs with RFM scoring</div></div>
+    <div class="insight-card g"><div class="il">Total Users</div><div class="iv green">2.56M</div><div class="id">Unique customers across all gateway ASIN cohorts</div></div>
+    <div class="insight-card a"><div class="il">Avg. Composite RFM</div><div class="iv">3.98 / 5</div><div class="id">Healthy overall portfolio score — R:4.56, F:4.30, M:3.18</div></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Customer Segment Distribution</div>
+    <div class="chart-grid">
+      <div class="chart-card"><div class="chart-title">Users by Segment</div><div class="chart-container short"><canvas id="c19"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">ASINs by Segment</div><div class="chart-container short"><canvas id="c20"></canvas></div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">RFM Score Distributions</div>
+    <div class="chart-grid three">
+      <div class="chart-card"><div class="chart-title">Recency (R) Score — User Distribution</div><div class="chart-container short"><canvas id="c21"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Monetary (M) Score — User Distribution</div><div class="chart-container short"><canvas id="c22"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Avg. Frequency by Segment</div><div class="chart-container short"><canvas id="c23"></canvas></div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">RFM Segment Score Radar</div>
+    <div class="chart-grid">
+      <div class="chart-card"><div class="chart-title">Avg R/F/M Scores by Segment</div><div class="chart-container tall"><canvas id="c24"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">M-Score vs. F-Score (Bubble = User Count)</div><div class="chart-container tall"><canvas id="c25"></canvas></div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Segment Definitions & Strategy</div>
+    <div class="data-table-wrap"><table class="data-table">
+      <thead><tr><th>Segment</th><th class="num">ASINs</th><th class="num">Users</th><th class="num">Avg R</th><th class="num">Avg F</th><th class="num">Avg M</th><th class="num">Avg Freq.</th><th>Strategy</th></tr></thead>
+      <tbody id="segTbody"></tbody>
+    </table></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Top 20 Gateway ASINs by User Volume</div>
+    <div class="data-table-wrap"><table class="data-table">
+      <thead><tr><th>Rank</th><th>ASIN</th><th class="num">Users</th><th class="num">Avg Freq.</th><th class="num">R Score</th><th class="num">F Score</th><th class="num">M Score</th><th>Segment</th></tr></thead>
+      <tbody id="rfmTop20Tbody"></tbody>
+    </table></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">DSP-Active ASINs — RFM Health Check</div>
+    <div class="callout" style="border-left:3px solid var(--cyan);margin-bottom:16px"><strong style="color:var(--text)">🔗 Cross-Reference:</strong> These are ASINs targeted by DSP campaigns in May 2026, shown here with their RFM scores to assess customer quality and identify upsell/retargeting opportunities.</div>
+    <div class="data-table-wrap"><table class="data-table">
+      <thead><tr><th>ASIN</th><th>Product</th><th class="num">RFM Users</th><th class="num">R Score</th><th class="num">F Score</th><th class="num">M Score</th><th>Segment</th><th class="num">DSP Sales</th></tr></thead>
+      <tbody id="dspRfmTbody"></tbody>
+    </table></div>
+  </div>
+</div></div>
+
+<script>
+Chart.defaults.color='#7a8aaa';Chart.defaults.borderColor='#252f45';
+Chart.defaults.font.family="'Inter','Segoe UI',system-ui,sans-serif";Chart.defaults.font.size=11;
+
+// ── UTILS ──
+const $ = id => document.getElementById(id);
+const fmt = (n,d=0) => n==null?'—': (typeof n==='string'?n:n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d}));
+const fmtC = n => '$'+fmt(n,2);
+const fmtCK = n => n>=1000000?'$'+(n/1000000).toFixed(1)+'M':n>=1000?'$'+(n/1000).toFixed(0)+'K':'$'+fmt(n,0);
+const A='#3b7ff5',G='#22c55e',AM='#f59e0b',R='#ef4444',C='#22d3ee',P='#a78bfa',MU='#7a8aaa';
+
+// ── DSP DAILY DATA ──
+const dates=['May 15','May 16','May 17','May 18','May 19','May 20','May 21','May 22','May 23','May 24','May 25','May 26','May 27','May 28','May 29','May 30','May 31'];
+const cost=[37.96,264.47,287.45,314.35,329.46,295.85,281.56,315.70,323.14,355.00,387.21,349.25,378.52,367.45,380.25,348.90,349.83];
+const sales=[185.37,580.67,827.22,1127.38,1455.92,1243.22,1180.45,1390.45,1456.23,1890.12,2045.38,1745.23,1934.45,1823.56,1946.23,1893.22,1924.75];
+const roas=sales.map((s,i)=>+(s/cost[i]).toFixed(2));
+const purch=[7,29,41,52,65,58,55,60,65,78,82,71,77,74,79,73,74];
+const ntb=[6,25,38,46,57,51,48,53,57,68,71,61,67,63,68,63,64];
+const pviews=[7,28,39,50,63,57,54,59,62,75,80,69,74,72,76,72,71];
+const promoted=[120.5,430.2,640.8,885.2,1150.3,985.4,940.2,1105.3,1145.8,1498.4,1625.7,1380.4,1540.3,1450.2,1553.8,1512.8,1544.2];
+const halo=[64.87,150.47,186.42,242.18,305.62,257.82,240.25,285.15,310.43,391.72,419.68,364.83,394.15,373.36,392.43,380.42,380.55];
+
+// ── ORDER TABLE ──
+const orders=[
+  {n:'Kids Artwork Frame',c:1300.69,s:9318.93,roas:7.16,p:391,pv:385,pc:6,ntb:348,ntbP:'89.0%',a:210},
+  {n:'Throw Blanket',c:1202.24,s:6256.13,roas:5.20,p:278,pv:267,pc:11,ntb:241,ntbP:'86.7%',a:185},
+  {n:'Large Flag Display Case',c:1268.20,s:4537.00,roas:3.58,p:119,pv:113,pc:6,ntb:105,ntbP:'88.2%',a:94},
+  {n:'24x36 Poster Frame',c:893.52,s:4700.65,roas:5.26,p:111,pv:108,pc:3,ntb:97,ntbP:'87.4%',a:88},
+  {n:'11x14 Picture Frame',c:1501.69,s:4057.15,roas:2.70,p:205,pv:195,pc:10,ntb:138,ntbP:'67.3%',a:120},
+];
+orders.forEach(o=>{
+  $('orderTbody').insertAdjacentHTML('beforeend',`<tr><td>${o.n}</td><td class="num">${fmtC(o.c)}</td><td class="num good">${fmtC(o.s)}</td><td class="num accent-c">${o.roas}×</td><td class="num">${o.p}</td><td class="num">${o.pv}</td><td class="num">${o.pc}</td><td class="num good">${o.ntb}</td><td class="num good">${o.ntbP}</td><td class="num">${o.a}</td></tr>`);
+});
+
+// ── ASIN TABLES ──
+const promoAsins=[
+  {a:'B07DL9LR5S',pr:'50x60 Throw Blanket (Cream Herringbone)',s:3886.47,p:144,pv:138,pc:6,n:132,at:98,np:'91.7%'},
+  {a:'B09ZK7V5F8',pr:'24x36 Poster Frame Streamline',s:3311.17,p:76,pv:72,pc:4,n:62,at:54,np:'81.6%'},
+  {a:'B07J9PK3JJ',pr:'Kids Artwork Frame Changeable (Black)',s:2361.61,p:124,pv:121,pc:3,n:110,at:88,np:'88.7%'},
+  {a:'B079MFL1VL',pr:'Large Flag Display Case - Mahogany',s:2235.48,p:57,pv:55,pc:2,n:55,at:42,np:'96.5%'},
+  {a:'B00YSHENGS',pr:'11x14 Picture Frame Signature (Black)',s:1199.00,p:78,pv:75,pc:3,n:58,at:62,np:'74.4%'},
+  {a:'B07QTZB6C3',pr:'Large Flag Display Case - Walnut',s:1121.80,p:29,pv:28,pc:1,n:28,at:22,np:'96.6%'},
+  {a:'B08YBKHKXB',pr:'Kids Artwork Frame Changeable (Dark Oak)',s:683.64,p:24,pv:23,pc:1,n:21,at:18,np:'87.5%'},
+  {a:'B095BX6BTS',pr:'Kids Artwork Frame Changeable (White)',s:662.61,p:35,pv:34,pc:1,n:29,at:28,np:'82.9%'},
+  {a:'B07DL9Y9RT',pr:'50x60 Throw Blanket (Black & Cream Diamond)',s:312.45,p:22,pv:21,pc:1,n:19,at:16,np:'86.4%'},
+  {a:'B07DLBK5S2',pr:'50x60 Throw Blanket (Navy Herringbone)',s:289.12,p:19,pv:18,pc:1,n:16,at:14,np:'84.2%'},
+];
+promoAsins.forEach(a=>{
+  $('promoTbody').insertAdjacentHTML('beforeend',`<tr><td style="font-family:monospace;font-size:11px;color:${C}">${a.a}</td><td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.pr}</td><td class="num good">${fmtC(a.s)}</td><td class="num">${a.p}</td><td class="num">${a.pv}</td><td class="num">${a.pc}</td><td class="num">${a.at}</td><td class="num good">${a.n}</td><td class="num good">${a.np}</td></tr>`);
+});
+const haloAsins=[
+  {a:'B096L3VDGS',pr:'Kids Artwork Frame 2-Pack (Black)',s:1473.18,p:50,pv:48,pc:2,n:46,at:38,np:'92.0%'},
+  {a:'B071WDG8WV',pr:'24x36 Poster Frame Epic (Black)',s:384.92,p:12,pv:12,pc:0,n:11,at:8,np:'91.7%'},
+  {a:'B071LPY3RH',pr:'18x24 Poster Frame Epic (Black)',s:27.99,p:1,pv:1,pc:0,n:0,at:1,np:'0.0%'},
+  {a:'B0753JTSPQ',pr:'11x14 Shadow Box Frame (Black/Felt)',s:19.99,p:1,pv:1,pc:0,n:1,at:1,np:'100%'},
+];
+haloAsins.forEach(a=>{
+  $('haloTbody').insertAdjacentHTML('beforeend',`<tr><td style="font-family:monospace;font-size:11px;color:${P}">${a.a}</td><td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.pr}</td><td class="num good">${fmtC(a.s)}</td><td class="num">${a.p}</td><td class="num">${a.pv}</td><td class="num">${a.pc}</td><td class="num">${a.at}</td><td class="num good">${a.n}</td><td class="num good">${a.np}</td></tr>`);
+});
+const top10=[
+  {r:1,a:'B07DL9LR5S',t:'Promoted',pr:'50x60 Throw Blanket (Cream Herringbone)',s:3886.47,p:144,n:132,np:'91.7%'},
+  {r:2,a:'B09ZK7V5F8',t:'Promoted',pr:'24x36 Poster Frame Streamline',s:3311.17,p:76,n:62,np:'81.6%'},
+  {r:3,a:'B07J9PK3JJ',t:'Promoted',pr:'Kids Artwork Frame Changeable (Black)',s:2361.61,p:124,n:110,np:'88.7%'},
+  {r:4,a:'B079MFL1VL',t:'Promoted',pr:'Large Flag Display Case Mahogany',s:2235.48,p:57,n:55,np:'96.5%'},
+  {r:5,a:'B096L3VDGS',t:'Brand Halo',pr:'Kids Artwork Frame 2-Pack (Black)',s:1473.18,p:50,n:46,np:'92.0%'},
+  {r:6,a:'B00YSHENGS',t:'Promoted',pr:'11x14 Picture Frame Signature (Black)',s:1199.00,p:78,n:58,np:'74.4%'},
+  {r:7,a:'B07QTZB6C3',t:'Promoted',pr:'Large Flag Display Case Walnut',s:1121.80,p:29,n:28,np:'96.6%'},
+  {r:8,a:'B08YBKHKXB',t:'Promoted',pr:'Kids Artwork Frame Changeable (Dark Oak)',s:683.64,p:24,n:21,np:'87.5%'},
+  {r:9,a:'Unallocated',t:'Promoted',pr:'Various (Unallocated)',s:705.12,p:39,n:34,np:'87.2%'},
+  {r:10,a:'B095BX6BTS',t:'Promoted',pr:'Kids Artwork Frame Changeable (White)',s:662.61,p:35,n:29,np:'82.9%'},
+];
+top10.forEach(a=>{
+  const ip=a.t==='Promoted';
+  $('top10Tbody').insertAdjacentHTML('beforeend',`<tr><td style="font-weight:700;color:${MU}">#${a.r}</td><td style="font-family:monospace;font-size:11px;color:${ip?C:P}">${a.a}</td><td><span class="tag ${ip?'tag-promoted':'tag-halo'}">${a.t}</span></td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px">${a.pr}</td><td class="num good">${fmtC(a.s)}</td><td class="num">${a.p}</td><td class="num good">${a.n}</td><td class="num good">${a.np}</td></tr>`);
+});
+
+// ── PTC TABLE ──
+const ptcPaths=[
+  {p:'SP → SP → SP → SP → SP',u:2502776,cv:117685,cr:'4.70%',rev:3457099,rpc:29.37},
+  {p:'SP → SP',u:1347407,cv:5571,cr:'0.41%',rev:141259,rpc:25.36},
+  {p:'SP',u:3015246,cv:5355,cr:'0.18%',rev:137387,rpc:25.65},
+  {p:'SP → SP → SP → SP',u:537598,cv:5389,cr:'1.00%',rev:133887,rpc:24.84},
+  {p:'SP → SP → SP',u:768576,cv:5282,cr:'0.69%',rev:130877,rpc:24.78},
+  {p:'SD → SP → SP → SP → SP',u:16110,cv:972,cr:'6.03%',rev:27685,rpc:28.48},
+  {p:'SP → SP → SP → SP → SD',u:12527,cv:582,cr:'4.65%',rev:17414,rpc:29.92},
+  {p:'SP → SP → SD → SP → SP',u:10677,cv:521,cr:'4.88%',rev:16011,rpc:30.73},
+  {p:'SP → SD → SP → SP → SP',u:10962,cv:548,cr:'5.00%',rev:15690,rpc:28.63},
+  {p:'SP → DSP',u:257,cv:8,cr:'3.11%',rev:173,rpc:21.61},
+];
+ptcPaths.forEach((p,i)=>{
+  const hasDSP=p.p.includes('DSP')||p.p.includes('SD');
+  $('ptcTbody').insertAdjacentHTML('beforeend',`<tr><td style="font-weight:700;color:${MU}">#${i+1}</td><td style="font-family:monospace;font-size:11px;color:${hasDSP?C:MU}">${p.p}</td><td class="num">${fmt(p.u)}</td><td class="num">${fmt(p.cv)}</td><td class="num ${parseFloat(p.cr)>3?'good':''}">${p.cr}</td><td class="num good">$${fmt(p.rev)}</td><td class="num">$${p.rpc.toFixed(2)}</td></tr>`);
+});
+
+// ── 5-YEAR DATA ──
+const annualData=[
+  {y:2021,rev:12386710,units:499691,asins:583,aov:24.79},
+  {y:2022,rev:35481029,units:1582757,asins:954,aov:22.42},
+  {y:2023,rev:51628794,units:2543937,asins:1300,aov:20.29},
+  {y:2024,rev:64495113,units:3130343,asins:2124,aov:20.60},
+  {y:2025,rev:62899947,units:3097265,asins:2265,aov:20.31},
+  {y:2026,rev:25693920,units:1203752,asins:2380,aov:21.34},
+];
+const AVG_FREQ=1.646; // from RFM dataset
+let cumLTV=0;
+annualData.forEach((r,i)=>{
+  const prev=i>0?annualData[i-1]:null;
+  const revD=prev?((r.rev-prev.rev)/prev.rev*100).toFixed(1)+'%':'—';
+  const unitD=prev?((r.units-prev.units)/prev.units*100).toFixed(1)+'%':'—';
+  const revColor=prev?(r.rev>=prev.rev?'good':'style="color:var(--red)"'):'';
+  const estCust=Math.round(r.units/AVG_FREQ);
+  const ltv1yr=+(r.aov*AVG_FREQ).toFixed(2);
+  cumLTV+=ltv1yr;
+  const cumDisplay=fmtC(+cumLTV.toFixed(2));
+  const partial=r.y===2026?' <span style="color:var(--muted);font-size:10px">(partial)</span>':'';
+  $('annualTbody').insertAdjacentHTML('beforeend',`<tr>
+    <td style="font-weight:700">${r.y}${partial}</td>
+    <td class="num good">${fmtCK(r.rev)}</td>
+    <td class="num">${fmt(r.units)}</td>
+    <td class="num">${fmt(estCust)}</td>
+    <td class="num">${fmtC(r.aov)}</td>
+    <td class="num accent-c">${fmtC(ltv1yr)}</td>
+    <td class="num" style="color:var(--cyan)">${cumDisplay}</td>
+    <td class="num">${r.asins.toLocaleString()}</td>
+    <td class="num ${revColor.includes('good')?'good':''}" ${revColor.includes('red')?'style="color:var(--red)"':''}>${revD}</td>
+    <td class="num">${unitD}</td>
+  </tr>`);
+});
+
+const top20Asins=[
+  {r:1,a:'B071WDG8WV',rev:10467193,u:242203,yrs:6},{r:2,a:'B071LPY3RH',rev:8564503,u:298966,yrs:6},
+  {r:3,a:'B071LPY75P',rev:6745719,u:288292,yrs:6},{r:4,a:'B07J9PK3JJ',rev:5475677,u:301341,yrs:6},
+  {r:5,a:'B07RQTBHFV',rev:4903317,u:155578,yrs:6},{r:6,a:'B073RQ25GQ',rev:4512335,u:244531,yrs:6},
+  {r:7,a:'B00YSHENGS',rev:3531186,u:285446,yrs:6},{r:8,a:'B08P32PFDB',rev:3283424,u:178596,yrs:6},
+  {r:9,a:'B0753JTSPQ',rev:3090990,u:160018,yrs:6},{r:10,a:'B079MFL1VL',rev:2857526,u:87102,yrs:6},
+  {r:11,a:'B084HLXNRR',rev:2571024,u:46847,yrs:6},{r:12,a:'B09ZK7V5F8',rev:2441263,u:72388,yrs:5},
+  {r:13,a:'B079SCFVDX',rev:2380120,u:125118,yrs:6},{r:14,a:'B079P4LFRJ',rev:2267828,u:74372,yrs:6},
+  {r:15,a:'B09ZK1CTXK',rev:2226679,u:92725,yrs:5},{r:16,a:'B095BX6BTS',rev:2099935,u:107749,yrs:6},
+  {r:17,a:'B015QAN15E',rev:2040827,u:113784,yrs:6},{r:18,a:'B07RPVPGBR',rev:1897258,u:52858,yrs:6},
+  {r:19,a:'B096L3VDGS',rev:1790329,u:59032,yrs:6},{r:20,a:'B00XCZVJ5K',rev:1759603,u:125519,yrs:6},
+];
+top20Asins.forEach(a=>{
+  const aov=a.rev/a.u;
+  const annualLTV=+(aov*AVG_FREQ).toFixed(2);
+  $('top20Tbody').insertAdjacentHTML('beforeend',`<tr>
+    <td style="font-weight:700;color:${MU}">#${a.r}</td>
+    <td style="font-family:monospace;font-size:11px;color:${C}">${a.a}</td>
+    <td class="num good">${fmtCK(a.rev)}</td>
+    <td class="num">${fmt(a.u)}</td>
+    <td class="num">${fmtC(aov)}</td>
+    <td class="num">${a.yrs} yr${a.yrs>1?'s':''}</td>
+    <td class="num accent-c">${fmtC(annualLTV)}</td>
+  </tr>`);
+});
+
+// Monthly data 2024-2026
+const months2024=[5102691,4903218,5052420,5190007,6060082,5834057,6074952,6228254,5230514,4423273,4282116,6113531];
+const months2025=[5574040,4801459,4626835,4692047,4768424,4875755,5689508,5478443,5277555,5000554,5421351,6693977];
+const months2026=[5272775,4743295,4949471,4476315,4902885,1349180,0,0,0,0,0,0];
+const monthLabels=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// ── RFM DATA ──
+const segData=[
+  {seg:'Needs Attention',asins:1131,users:1563981,r:4.46,f:4.27,m:2.90,freq:1.61,strategy:'Upsell to higher-M products; re-engage with DSP retargeting'},
+  {seg:'Big Spenders',asins:538,users:421846,r:4.42,f:4.52,m:4.54,freq:1.98,strategy:'Protect with loyalty offers; cross-sell premium SKUs'},
+  {seg:'Potential Loyalists',asins:589,users:351704,r:4.70,f:4.16,m:1.96,freq:1.45,strategy:'Convert recency into repeat purchase; bundle offers'},
+  {seg:'Recent Customers',asins:307,users:132317,r:4.83,f:4.10,m:3.43,freq:1.28,strategy:'Nurture with follow-up emails; introduce related ASINs'},
+  {seg:'Loyal Customers',asins:140,users:61766,r:4.57,f:4.66,m:4.34,freq:2.14,strategy:'VIP treatment; early access to new products'},
+  {seg:'At Risk',asins:23,users:24999,r:4.34,f:4.61,m:3.76,freq:2.41,strategy:'Win-back campaign; price incentives'},
+  {seg:'Champions',asins:27,users:122,r:4.91,f:4.96,m:4.77,freq:3.85,strategy:'Leverage as brand advocates; premium loyalty'},
+];
+const segColors={Champions:'#fbbf24','Loyal Customers':'#4ade80','Big Spenders':'#c4b5fd','Potential Loyalists':'#67e8f9','Recent Customers':'#93bbfd','At Risk':'#fca5a5','Needs Attention':'#9ca3af'};
+const segClass={Champions:'Champions','Loyal Customers':'Loyal','Big Spenders':'Big','Potential Loyalists':'Potential','Recent Customers':'Recent','At Risk':'Risk','Needs Attention':'Needs'};
+
+segData.forEach(s=>{
+  const cls=segClass[s.seg]||'Needs';
+  $('segTbody').insertAdjacentHTML('beforeend',`<tr><td><span class="seg-badge seg-${cls}">${s.seg}</span></td><td class="num">${s.asins.toLocaleString()}</td><td class="num">${s.users.toLocaleString()}</td><td class="num">${s.r.toFixed(2)}</td><td class="num">${s.f.toFixed(2)}</td><td class="num">${s.m.toFixed(2)}</td><td class="num">${s.freq.toFixed(2)}</td><td style="font-size:11px;color:${MU}">${s.strategy}</td></tr>`);
+});
+
+const top20rfm=[
+  {a:'B07J9PK3JJ',u:51570,freq:1.35,r:4.47,f:4.24,m:3.08,s:'Needs Attention'},
+  {a:'B071LPY75P',u:50994,freq:1.75,r:4.47,f:4.38,m:3.73,s:'Needs Attention'},
+  {a:'B00YSHENGS',u:50040,freq:1.63,r:4.45,f:4.34,m:2.49,s:'Needs Attention'},
+  {a:'B073RQ25GQ',u:42253,freq:1.82,r:4.47,f:4.40,m:3.22,s:'Needs Attention'},
+  {a:'B071LPY3RH',u:38517,freq:2.42,r:4.44,f:4.57,m:4.29,s:'Big Spenders'},
+  {a:'B08P32PFDB',u:36271,freq:1.65,r:4.44,f:4.35,m:3.06,s:'Needs Attention'},
+  {a:'B0753JTSPQ',u:35451,freq:1.42,r:4.46,f:4.23,m:2.95,s:'Needs Attention'},
+  {a:'B071WDG8WV',u:25258,freq:2.35,r:4.47,f:4.57,m:4.77,s:'Big Spenders'},
+  {a:'B079SCFVDX',u:23622,freq:1.80,r:4.38,f:4.40,m:3.32,s:'Needs Attention'},
+  {a:'B07T86GC9N',u:22952,freq:1.82,r:4.45,f:4.42,m:2.52,s:'Needs Attention'},
+  {a:'B07RQTBHFV',u:20871,freq:1.93,r:4.37,f:4.46,m:4.40,s:'Big Spenders'},
+  {a:'B079MFL1VL',u:20520,freq:1.20,r:4.46,f:4.14,m:4.06,s:'Big Spenders'},
+  {a:'B09ZK1CTXK',u:18967,freq:1.62,r:4.36,f:4.35,m:3.76,s:'Needs Attention'},
+  {a:'B079MHLT3W',u:17719,freq:1.65,r:4.43,f:4.34,m:2.43,s:'Needs Attention'},
+  {a:'B00XCZVJ5K',u:17222,freq:1.71,r:4.38,f:4.41,m:2.75,s:'Needs Attention'},
+  {a:'B09ZKD296M',u:16625,freq:1.26,r:4.62,f:4.18,m:3.34,s:'Recent Customers'},
+  {a:'B09ZK7V5F8',u:16247,freq:1.43,r:4.58,f:4.26,m:4.32,s:'Big Spenders'},
+  {a:'B095BX6BTS',u:16224,freq:1.39,r:4.46,f:4.26,m:3.27,s:'Needs Attention'},
+  {a:'B096L3VDGS',u:15997,freq:1.24,r:4.46,f:4.17,m:3.54,s:'Needs Attention'},
+  {a:'B015QAN15E',u:15842,freq:2.24,r:4.48,f:4.51,m:3.52,s:'At Risk'},
+];
+top20rfm.forEach((r,i)=>{
+  const cls=segClass[r.s]||'Needs';
+  $('rfmTop20Tbody').insertAdjacentHTML('beforeend',`<tr><td style="font-weight:700;color:${MU}">#${i+1}</td><td style="font-family:monospace;font-size:11px;color:${C}">${r.a}</td><td class="num">${r.u.toLocaleString()}</td><td class="num">${r.freq.toFixed(2)}</td><td class="num">${r.r.toFixed(2)}</td><td class="num">${r.f.toFixed(2)}</td><td class="num">${r.m.toFixed(2)}</td><td><span class="seg-badge seg-${cls}">${r.s}</span></td></tr>`);
+});
+
+// DSP + RFM cross-reference
+const dspRfm=[
+  {a:'B07DL9LR5S',pr:'50x60 Throw Blanket',u:5325,r:4.39,f:4.17,m:2.43,s:'Needs Attention',dspS:3886.47},
+  {a:'B09ZK7V5F8',pr:'24x36 Poster Frame Streamline',u:16247,r:4.58,f:4.26,m:4.32,s:'Big Spenders',dspS:3311.17},
+  {a:'B07J9PK3JJ',pr:'Kids Artwork Frame (Black)',u:51570,r:4.47,f:4.24,m:3.08,s:'Needs Attention',dspS:2361.61},
+  {a:'B079MFL1VL',pr:'Large Flag Display Case Mahogany',u:20520,r:4.46,f:4.14,m:4.06,s:'Big Spenders',dspS:2235.48},
+  {a:'B096L3VDGS',pr:'Kids Artwork Frame 2-Pack',u:15997,r:4.46,f:4.17,m:3.54,s:'Needs Attention',dspS:1473.18},
+  {a:'B00YSHENGS',pr:'11x14 Picture Frame (Black)',u:50040,r:4.45,f:4.34,m:2.49,s:'Needs Attention',dspS:1199.00},
+  {a:'B07QTZB6C3',pr:'Large Flag Display Case Walnut',u:7371,r:4.40,f:4.19,m:4.10,s:'Big Spenders',dspS:1121.80},
+];
+dspRfm.forEach(r=>{
+  const cls=segClass[r.s]||'Needs';
+  $('dspRfmTbody').insertAdjacentHTML('beforeend',`<tr><td style="font-family:monospace;font-size:11px;color:${C}">${r.a}</td><td style="font-size:11px">${r.pr}</td><td class="num">${r.u.toLocaleString()}</td><td class="num">${r.r.toFixed(2)}</td><td class="num">${r.f.toFixed(2)}</td><td class="num">${r.m.toFixed(2)}</td><td><span class="seg-badge seg-${cls}">${r.s}</span></td><td class="num good">${fmtC(r.dspS)}</td></tr>`);
+});
+
+
+// ═══ CHARTS ═══
+
+// C1 - Spend/Revenue/ROAS
+new Chart($('c1'),{type:'bar',data:{labels:dates,datasets:[
+  {label:'Ad Spend ($)',data:cost,backgroundColor:'#3b7ff533',borderColor:A,borderWidth:1,yAxisID:'y'},
+  {label:'Ad Revenue ($)',data:sales,backgroundColor:'#22c55e33',borderColor:G,borderWidth:1,yAxisID:'y'},
+  {label:'ROAS (×)',data:roas,type:'line',borderColor:AM,backgroundColor:'transparent',borderWidth:2,pointRadius:3,pointBackgroundColor:AM,yAxisID:'y2'},
+]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{boxWidth:10,padding:14}}},scales:{y:{grid:{color:'#252f4566'},ticks:{callback:v=>'$'+v}},y2:{position:'right',grid:{display:false},ticks:{callback:v=>v+'×'}}}}});
+
+// C2 - Purchases
+new Chart($('c2'),{type:'bar',data:{labels:dates,datasets:[
+  {label:'Total Purchases',data:purch,backgroundColor:'#3b7ff544',borderColor:A,borderWidth:1},
+  {label:'NTB Purchases',data:ntb,backgroundColor:'#22c55e44',borderColor:G,borderWidth:1},
+  {label:'Purchase Views',data:pviews,type:'line',borderColor:C,backgroundColor:'transparent',borderWidth:1.5,pointRadius:2},
+]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{boxWidth:10,padding:12}}},scales:{y:{grid:{color:'#252f4566'}}}}});
+
+// C3 - NTB Donut
+new Chart($('c3'),{type:'doughnut',data:{labels:['NTB (929)','Existing (175)'],datasets:[{data:[929,175],backgroundColor:['#22c55eaa','#3b7ff555'],borderColor:[G,A],borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{position:'bottom',labels:{padding:14,boxWidth:12}}}}});
+
+// C4 - ASIN Revenue Trend
+new Chart($('c4'),{type:'line',data:{labels:dates,datasets:[
+  {label:'Promoted',data:promoted,borderColor:AM,backgroundColor:'#f59e0b22',fill:true,borderWidth:2,tension:0.3,pointRadius:3},
+  {label:'Brand Halo',data:halo,borderColor:P,backgroundColor:'#a78bfa22',fill:true,borderWidth:2,tension:0.3,pointRadius:3},
+]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{boxWidth:10,padding:14}}},scales:{y:{grid:{color:'#252f4566'},ticks:{callback:v=>'$'+v}}}}});
+
+// C5/C6 - Conv type donuts
+const promoTotal=promoAsins.reduce((s,a)=>s+a.s,0);
+const haloTotal=haloAsins.reduce((s,a)=>s+a.s,0);
+new Chart($('c5'),{type:'doughnut',data:{labels:['Promoted ($'+promoTotal.toFixed(0)+')','Brand Halo ($'+haloTotal.toFixed(0)+')'],datasets:[{data:[promoTotal,haloTotal],backgroundColor:['#f59e0baa','#a78bfa88'],borderColor:[AM,P],borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{padding:12,boxWidth:12}}}}});
+const promoP2=promoAsins.reduce((s,a)=>s+a.p,0);
+const haloP2=haloAsins.reduce((s,a)=>s+a.p,0);
+new Chart($('c6'),{type:'doughnut',data:{labels:['Promoted ('+promoP2+')','Brand Halo ('+haloP2+')'],datasets:[{data:[promoP2,haloP2],backgroundColor:['#f59e0baa','#a78bfa88'],borderColor:[AM,P],borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{padding:12,boxWidth:12}}}}});
+
+// C7 - ROAS by sequence
+new Chart($('c7'),{type:'bar',data:{labels:['DSP Only','SA → DSP','SA Only*','DSP → SA'],datasets:[{label:'ROAS',data:[1.89,11.54,null,9.65],backgroundColor:['#22d3ee66','#22c55e66','#7a8aaa44','#f59e0b66'],borderColor:[C,G,MU,AM],borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw?c.raw+'×':'N/A (no DSP cost)'}}},scales:{y:{grid:{color:'#252f4566'},ticks:{callback:v=>v+'×'}}}}});
+
+// C8 - NTB by sequence
+new Chart($('c8'),{type:'bar',data:{labels:['DSP Only','SA → DSP','SA Only','DSP → SA'],datasets:[{label:'NTB Rate %',data:[94.3,78.7,78.6,82.5],backgroundColor:['#22c55e66','#22c55e44','#7a8aaa44','#22c55e55'],borderColor:[G,G,MU,G],borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{grid:{color:'#252f4566'},ticks:{callback:v=>v+'%'},max:100}}}});
+
+// C9/C10 - Exposure
+new Chart($('c9'),{type:'doughnut',data:{labels:['Ad-Exposed ($4.45M)','Non-Ad ($627K)'],datasets:[{data:[4450209,627242],backgroundColor:['#3b7ff5aa','#7a8aaa44'],borderColor:[A,MU],borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{padding:12,boxWidth:12}}}}});
+new Chart($('c10'),{type:'doughnut',data:{labels:['Ad-Exposed (560K)','Non-Ad (546K)'],datasets:[{data:[560637,546119],backgroundColor:['#3b7ff5aa','#7a8aaa44'],borderColor:[A,MU],borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{padding:12,boxWidth:12}}}}});
+
+// C11/C12 - Frequency
+new Chart($('c11'),{type:'doughnut',data:{labels:['Multi (3+) 82.3%','Single 10.5%','Double 7.2%'],datasets:[{data:[129404,16440,11273],backgroundColor:['#3b7ff5aa','#22c55e66','#f59e0b55'],borderColor:[A,G,AM],borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{padding:12,boxWidth:12}}}}});
+new Chart($('c12'),{type:'doughnut',data:{labels:['Multi (3+) 79.4%','Single 12.2%','Double 8.4%'],datasets:[{data:[136647,10575,8633],backgroundColor:['#3b7ff5aa','#22c55e66','#f59e0b55'],borderColor:[A,G,AM],borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{padding:12,boxWidth:12}}}}});
+
+// C13 - Lead Time
+new Chart($('c13'),{type:'bar',data:{labels:['1 day','2 days','3 days','4 days','5 days','6 days','7+ days'],datasets:[
+  {label:'Ad-Exposed',data:[20283,1460,833,549,411,338,1739],backgroundColor:'#3b7ff555',borderColor:A,borderWidth:1.5},
+  {label:'Non-Ad-Exposed',data:[2609,116,65,47,30,27,122],backgroundColor:'#f59e0b44',borderColor:AM,borderWidth:1.5},
+]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{boxWidth:10,padding:14}}},scales:{y:{grid:{color:'#252f4566'},type:'logarithmic',ticks:{callback:v=>v.toLocaleString()}}}}});
+
+// C14 - PTC Revenue
+const ptcL=ptcPaths.slice(0,8).map(p=>p.p.length>30?p.p.slice(0,30)+'…':p.p);
+const ptcR=ptcPaths.slice(0,8).map(p=>p.rev);
+const ptcHasDSP=ptcPaths.slice(0,8).map(p=>p.p.includes('DSP')||p.p.includes('SD'));
+new Chart($('c14'),{type:'bar',indexAxis:'y',data:{labels:ptcL,datasets:[{label:'Revenue ($)',data:ptcR,backgroundColor:ptcHasDSP.map(h=>h?'#22d3ee66':'#3b7ff544'),borderColor:ptcHasDSP.map(h=>h?C:A),borderWidth:1.5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'#252f4566'},ticks:{callback:v=>'$'+v.toLocaleString()}},y:{grid:{display:false}}}}});
+
+// LTV charts
+const ltvByYear=annualData.map(r=>+(r.aov*AVG_FREQ).toFixed(2));
+const custByYear=annualData.map(r=>Math.round(r.units/AVG_FREQ));
+new Chart($('c19ltv'),{type:'bar',data:{labels:annualData.map(r=>String(r.y)),datasets:[
+  {label:'1-Yr LTV ($)',data:ltvByYear,backgroundColor:'#22d3ee66',borderColor:C,borderWidth:1.5,yAxisID:'y'},
+  {label:'AOV ($)',data:annualData.map(r=>r.aov),type:'line',borderColor:AM,backgroundColor:'transparent',borderWidth:2,pointRadius:4,yAxisID:'y'},
+]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{boxWidth:10,padding:12}}},scales:{y:{grid:{color:'#252f4566'},ticks:{callback:v=>'$'+v}}}}});
+new Chart($('c20cust'),{type:'bar',data:{labels:annualData.map(r=>String(r.y)),datasets:[
+  {label:'Est. Unique Customers',data:custByYear,backgroundColor:annualData.map((_,i)=>i===5?'#a78bfa55':'#a78bfa99'),borderColor:P,borderWidth:1.5},
+]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{grid:{color:'#252f4566'},ticks:{callback:v=>(v/1000000).toFixed(1)+'M'}}}}});
+
+// C15 - Annual Revenue
+new Chart($('c15'),{type:'bar',data:{labels:annualData.map(r=>r.y===2026?'2026*':String(r.y)),datasets:[
+  {label:'Revenue',data:annualData.map(r=>r.rev),backgroundColor:annualData.map((r,i)=>i===5?'#3b7ff577':'#3b7ff5aa'),borderColor:A,borderWidth:1.5},
+  {label:'Units Sold',data:annualData.map(r=>r.units),type:'line',borderColor:G,backgroundColor:'transparent',borderWidth:2,pointRadius:4,yAxisID:'y2'},
+]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{boxWidth:10,padding:14}}},scales:{y:{grid:{color:'#252f4566'},ticks:{callback:v=>fmtCK(v)}},y2:{position:'right',grid:{display:false},ticks:{callback:v=>(v/1000).toFixed(0)+'K units'}}}}});
+
+// C16 - Monthly revenue
+new Chart($('c16'),{type:'line',data:{labels:monthLabels,datasets:[
+  {label:'2024',data:months2024,borderColor:'#3b7ff5',backgroundColor:'transparent',borderWidth:2,pointRadius:3,tension:0.3},
+  {label:'2025',data:months2025,borderColor:'#22c55e',backgroundColor:'transparent',borderWidth:2,pointRadius:3,tension:0.3},
+  {label:'2026 (partial)',data:months2026.map(v=>v||null),borderColor:'#f59e0b',backgroundColor:'transparent',borderWidth:2,pointRadius:3,tension:0.3,borderDash:[5,4]},
+]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{boxWidth:10,padding:14}}},scales:{y:{grid:{color:'#252f4566'},ticks:{callback:v=>fmtCK(v)}}}}});
+
+// C16-LTV monthly LTV
+const ltv2024=[34.00,33.99,35.30,34.62,32.63,33.26,33.03,33.77,35.50,35.57,33.92,32.70];
+const ltv2025=[35.26,36.18,35.37,35.52,35.18,35.38,32.30,32.86,30.72,31.89,29.95,33.12];
+new Chart($('c16ltv'),{type:'line',data:{labels:monthLabels,datasets:[
+  {label:'2024 Monthly LTV',data:ltv2024,borderColor:A,backgroundColor:'#3b7ff522',fill:true,borderWidth:2,pointRadius:4,tension:0.3},
+  {label:'2025 Monthly LTV',data:ltv2025,borderColor:G,backgroundColor:'#22c55e22',fill:true,borderWidth:2,pointRadius:4,tension:0.3},
+]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{boxWidth:10,padding:14}},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: $${ctx.raw.toFixed(2)}`}}},scales:{y:{grid:{color:'#252f4566'},ticks:{callback:v=>'$'+v.toFixed(2)},min:28,max:38}}}});
+
+// C17 - AOV trend
+new Chart($('c17'),{type:'line',data:{labels:annualData.map(r=>String(r.y)),datasets:[{label:'AOV ($/unit)',data:annualData.map(r=>r.aov),borderColor:AM,backgroundColor:'#f59e0b22',fill:true,borderWidth:2,pointRadius:5,pointBackgroundColor:AM,tension:0.3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{grid:{color:'#252f4566'},ticks:{callback:v=>'$'+v}}}}});
+
+// C18 - ASIN count
+new Chart($('c18'),{type:'bar',data:{labels:annualData.map(r=>String(r.y)),datasets:[{label:'Active ASINs',data:annualData.map(r=>r.asins),backgroundColor:'#a78bfa88',borderColor:P,borderWidth:1.5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{grid:{color:'#252f4566'}}}}});
+
+// C19/C20 - RFM Segment donuts
+const segLabels=segData.map(s=>s.seg);
+const segUsers=segData.map(s=>s.users);
+const segAsins=segData.map(s=>s.asins);
+const segColArr=segData.map(s=>segColors[s.seg]+'aa');
+const segBorderArr=segData.map(s=>segColors[s.seg]);
+new Chart($('c19'),{type:'doughnut',data:{labels:segLabels,datasets:[{data:segUsers,backgroundColor:segColArr,borderColor:segBorderArr,borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom',labels:{padding:8,boxWidth:10,font:{size:10}}}}}});
+new Chart($('c20'),{type:'doughnut',data:{labels:segLabels,datasets:[{data:segAsins,backgroundColor:segColArr,borderColor:segBorderArr,borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom',labels:{padding:8,boxWidth:10,font:{size:10}}}}}});
+
+// C21 - R-score dist
+new Chart($('c21'),{type:'bar',data:{labels:['4.0–4.3','4.3–4.6','4.6–4.8','4.8–5.0'],datasets:[{label:'Users',data:[43678,2158446,288651,65828],backgroundColor:['#3b7ff566','#3b7ff5aa','#22d3eeaa','#22c55eaa'],borderColor:[A,A,C,G],borderWidth:1.5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{grid:{color:'#252f4566'},ticks:{callback:v=>(v/1000).toFixed(0)+'K'}}}}});
+
+// C22 - M-score dist
+new Chart($('c22'),{type:'bar',data:{labels:['1–2 (Low)','2–3 (Med-Low)','3–4 (Med-High)','4–5 (High)'],datasets:[{label:'Users',data:[201102,970927,907601,477082],backgroundColor:['#ef444466','#f59e0b66','#22c55e66','#a78bfa88'],borderColor:[R,AM,G,P],borderWidth:1.5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{grid:{color:'#252f4566'},ticks:{callback:v=>(v/1000).toFixed(0)+'K'}}}}});
+
+// C23 - Avg frequency by segment
+new Chart($('c23'),{type:'bar',data:{labels:segData.map(s=>s.seg.length>12?s.seg.slice(0,12)+'…':s.seg),datasets:[{label:'Avg Frequency',data:segData.map(s=>s.freq),backgroundColor:segData.map(s=>segColors[s.seg]+'88'),borderColor:segData.map(s=>segColors[s.seg]),borderWidth:1.5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{grid:{color:'#252f4566'},beginAtZero:true}}}});
+
+// C24 - Radar chart
+new Chart($('c24'),{type:'radar',data:{labels:['Recency (R)','Frequency (F)','Monetary (M)','Avg Order Freq'],datasets:segData.slice(0,5).map(s=>({label:s.seg,data:[s.r,s.f,s.m,s.freq],borderColor:segColors[s.seg],backgroundColor:segColors[s.seg]+'22',borderWidth:1.5,pointRadius:3}))},options:{responsive:true,maintainAspectRatio:false,scales:{r:{grid:{color:'#252f4566'},pointLabels:{color:MU,font:{size:11}},min:1,max:5,ticks:{display:false}}},plugins:{legend:{position:'bottom',labels:{padding:8,boxWidth:10,font:{size:10}}}}}});
+
+// C25 - Bubble chart: M vs F, bubble = users
+new Chart($('c25'),{type:'bubble',data:{datasets:segData.map(s=>({label:s.seg,data:[{x:s.f,y:s.m,r:Math.max(5,Math.min(40,s.users/60000))}],backgroundColor:segColors[s.seg]+'88',borderColor:segColors[s.seg],borderWidth:1.5}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{padding:8,boxWidth:10,font:{size:10}}}},scales:{x:{grid:{color:'#252f4566'},title:{display:true,text:'F Score (Frequency)',color:MU},min:4,max:5},y:{grid:{color:'#252f4566'},title:{display:true,text:'M Score (Monetary)',color:MU},min:1,max:5}}}});
+
+// ── TAB SWITCH ──
+function switchTab(tab,btn){
+  document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el=>el.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>
